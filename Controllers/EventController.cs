@@ -51,6 +51,7 @@ namespace Calendar.Controllers
                     Description = dto.Description,
                     DateEvent = dto.DateEvent,
                     Location = dto.Location,
+                    BgColor = dto.BgColor,
                     TypeEvent = dto.TypeEvent
                 };
 
@@ -134,6 +135,7 @@ namespace Calendar.Controllers
                 ev.Description = dto.Description;
                 ev.Location = dto.Location;
                 ev.DateEvent = dto.DateEvent;
+                ev.BgColor = dto.BgColor;
                 ev.TypeEvent = dto.TypeEvent;
                 ev.UpdatedAt = DateTime.UtcNow;
 

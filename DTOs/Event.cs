@@ -8,6 +8,7 @@ namespace Calendar.DTOs
         public string Name { get; set; } = string.Empty;
         public string Description { get; set; } = string.Empty;
         public string Location { get; set; } = string.Empty;
+        public string BgColor { get; set; } = string.Empty;
         public TypeEvent TypeEvent { get; set; } = TypeEvent.Shared;
         public DateTime DateEvent { get; set; }
         public bool ForcedNametag { get; set; } = false;
@@ -22,6 +23,7 @@ namespace Calendar.DTOs
         public string Name { get; set; } = string.Empty;
         public string Description { get; set; } = string.Empty;
         public string Location { get; set; } = string.Empty;
+        public string BgColor { get; set; } = string.Empty;
         public TypeEvent TypeEvent { get; set; }
         public DateTime DateEvent { get; set; }
 

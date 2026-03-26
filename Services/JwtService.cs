@@ -23,6 +23,7 @@ namespace Calendar.Services
             {
                 new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
                 new Claim(ClaimTypes.Email, user.Email),
+                new Claim(ClaimTypes.Name, user.Name),
                 new Claim(ClaimTypes.Role, user.IsAdmin ? "Admin" : "User")
             };
 
@@ -43,6 +44,31 @@ namespace Calendar.Services
             );
 
             return new JwtSecurityTokenHandler().WriteToken(token);
+        }
+
+        public ClaimsPrincipal? VerifyToken(string token)
+        {
+            var tokenHandler = new JwtSecurityTokenHandler();
+
+            var key = Encoding.ASCII.GetBytes(_config["Jwt:Key"]);
+
+            try
+            {
+                var principal = tokenHandler.ValidateToken(token, new TokenValidationParameters
+                {
+                    ValidateIssuerSigningKey = true,
+                    IssuerSigningKey = new SymmetricSecurityKey(key),
+                    ValidateIssuer = false,
+                    ValidateAudience = false,
+                    ClockSkew = TimeSpan.Zero
+                }, out SecurityToken validatedToken);
+
+                return principal;
+            }
+            catch
+            {
+                return null;
+            }
         }
     }
 }

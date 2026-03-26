@@ -5,6 +5,7 @@ using Calendar.Services;
 using BCrypt.Net;
 using Microsoft.EntityFrameworkCore;
 using Calendar.DTOs;
+using Microsoft.AspNetCore.Authorization;
 
 namespace Calendar.Controllers
 {
@@ -64,5 +65,47 @@ namespace Calendar.Controllers
                 token
             });
         }
+
+
+        [HttpGet("verify")]
+        public async Task<IActionResult> Verify()
+        {
+            var authHeader = Request.Headers["Authorization"].ToString();
+
+            if (string.IsNullOrEmpty(authHeader) || !authHeader.StartsWith("Bearer "))
+            {
+                return Unauthorized("Token no proporcionado");
+            }
+
+            var token = authHeader.Substring("Bearer ".Length).Trim();
+
+            try
+            {
+
+                var principal = _jwtService.VerifyToken(token);
+
+                if (principal == null)
+                    return Unauthorized("Token inválido o expirado.");
+
+                var userIdClaim = principal.Claims.FirstOrDefault()?.Value;
+
+                if (userIdClaim == null)
+                    return Unauthorized("Token malformado.");
+
+                var user = await _context.Users
+                    .Select(u => new { u.Id, u.Name, u.Email })
+                    .FirstOrDefaultAsync(u => u.Id.ToString() == userIdClaim);
+
+                if (user == null)
+                    return NotFound("Usuario no encontrado.");
+
+                return Ok();
+            }
+            catch (Exception ex)
+            {
+                return Unauthorized("Error al validar token");
+            }
+        }
+
     }
 }
