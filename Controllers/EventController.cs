@@ -36,10 +36,20 @@ namespace Calendar.Controllers
                 if (exists && dto.ForcedNametag)
                     return BadRequest("Evento ya registrado.");
 
+                if (dto.DateEndEvent <= dto.DateEvent)
+                    return BadRequest("La fecha de fin debe ser mayor a la fecha de inicio.");
+
                 var superPositionExclusive = await _context.Events
+                    .Where(e => e.Active && e.DeletedAt == null)
+                    .Where(e => e.TypeEvent == TypeEvent.Exclusive)
+                    .Where(e => e.Participations.Any(p =>
+                        p.UserId == userIdLogged &&
+                        p.Active &&
+                        p.DeletedAt == null
+                    ))
                     .AnyAsync(e =>
-                        e.TypeEvent == TypeEvent.Exclusive &&
-                        e.DateEvent == dto.DateEvent
+                        dto.DateEvent <= e.DateEndEvent &&
+                        dto.DateEndEvent >= e.DateEvent
                     );
 
                 if (superPositionExclusive)
@@ -50,6 +60,7 @@ namespace Calendar.Controllers
                     Name = dto.Name.ToUpper(),
                     Description = dto.Description,
                     DateEvent = dto.DateEvent,
+                    DateEndEvent = dto.DateEndEvent,
                     Location = dto.Location,
                     BgColor = dto.BgColor,
                     TypeEvent = dto.TypeEvent
@@ -116,11 +127,21 @@ namespace Calendar.Controllers
             if (!isCreator)
                 return Forbid("No tienes permisos para editar este evento.");
 
+            if (dto.DateEndEvent <= dto.DateEvent)
+                return BadRequest("La fecha de fin debe ser mayor a la fecha de inicio.");
+
             var superPositionExclusive = await _context.Events
+                .Where(e => e.Active && e.DeletedAt == null)
+                .Where(e => e.TypeEvent == TypeEvent.Exclusive)
+                .Where(e => e.Id != id)
+                .Where(e => e.Participations.Any(p =>
+                    p.UserId == userIdLogged &&
+                    p.Active &&
+                    p.DeletedAt == null
+                ))
                 .AnyAsync(e =>
-                    e.TypeEvent == TypeEvent.Exclusive &&
-                    e.DateEvent == dto.DateEvent &&
-                    e.Id != id
+                    dto.DateEvent <= e.DateEndEvent &&
+                    dto.DateEndEvent >= e.DateEvent
                 );
 
             if (superPositionExclusive)
@@ -135,6 +156,7 @@ namespace Calendar.Controllers
                 ev.Description = dto.Description;
                 ev.Location = dto.Location;
                 ev.DateEvent = dto.DateEvent;
+                ev.DateEndEvent = dto.DateEntEvent;
                 ev.BgColor = dto.BgColor;
                 ev.TypeEvent = dto.TypeEvent;
                 ev.UpdatedAt = DateTime.UtcNow;

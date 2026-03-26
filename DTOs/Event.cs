@@ -11,6 +11,7 @@ namespace Calendar.DTOs
         public string BgColor { get; set; } = string.Empty;
         public TypeEvent TypeEvent { get; set; } = TypeEvent.Shared;
         public DateTime DateEvent { get; set; }
+        public DateTime DateEndEvent { get; set; }
         public bool ForcedNametag { get; set; } = false;
 
         public List<int> ParticipantsIds { get; set; } = new();
@@ -26,6 +27,7 @@ namespace Calendar.DTOs
         public string BgColor { get; set; } = string.Empty;
         public TypeEvent TypeEvent { get; set; }
         public DateTime DateEvent { get; set; }
+        public DateTime DateEntEvent { get; set; }
 
         public List<int> ParticipantsIds { get; set; } = new();
     }

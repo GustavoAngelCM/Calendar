@@ -9,6 +9,7 @@
         public string BgColor { get; set; } = string.Empty;
         public TypeEvent TypeEvent { get; set; } = TypeEvent.Shared;
         public DateTime DateEvent { get; set; }
+        public DateTime DateEndEvent { get; set; }
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime? UpdatedAt { get; set; }
