@@ -45,6 +45,14 @@ namespace Calendar.Controllers
                     e.Location,
                     e.TypeEvent,
 
+                    GuestUsers = e.Participations
+                                .Where(pe => pe.IsCreator == true)
+                                .Select(pe => new {
+                                    pe.User.Id,
+                                    pe.User.Name
+                                })
+                                .ToList(),
+
                     Detail = e.Participations
                         .Where(p =>
                             p.UserId == userLoggedId &&
