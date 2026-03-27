@@ -11,7 +11,7 @@ namespace Calendar.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    public class EventController: ControllerBase
+    public class EventController : ControllerBase
     {
         private readonly AppDbContext _context;
 
@@ -31,9 +31,9 @@ namespace Calendar.Controllers
             try
             {
                 var exists = await _context.Events
-                    .AnyAsync(u => u.Name == dto.Name.ToUpper());
+                    .AnyAsync(e => e.Name.ToUpper() == dto.Name.ToUpper());
 
-                if (exists && dto.ForcedNametag)
+                if (exists && dto.ForcedNametag == false)
                     return BadRequest("Evento ya registrado.");
 
                 if (dto.DateEndEvent <= dto.DateEvent)
@@ -41,7 +41,7 @@ namespace Calendar.Controllers
 
                 var superPositionExclusive = await _context.Events
                     .Where(e => e.Active && e.DeletedAt == null)
-                    .Where(e => e.TypeEvent == TypeEvent.Exclusive)
+                    .Where(e => dto.TypeEvent == TypeEvent.Exclusive)
                     .Where(e => e.Participations.Any(p =>
                         p.UserId == userIdLogged &&
                         p.Active &&
@@ -99,7 +99,7 @@ namespace Calendar.Controllers
 
                 await transaction.CommitAsync();
 
-                return Ok(newEvent);
+                return Ok(new { message = "Evento registrado correctamente."});
             }
             catch (Exception)
             {
@@ -132,7 +132,7 @@ namespace Calendar.Controllers
 
             var superPositionExclusive = await _context.Events
                 .Where(e => e.Active && e.DeletedAt == null)
-                .Where(e => e.TypeEvent == TypeEvent.Exclusive)
+                .Where(e => dto.TypeEvent == TypeEvent.Exclusive)
                 .Where(e => e.Id != id)
                 .Where(e => e.Participations.Any(p =>
                     p.UserId == userIdLogged &&
@@ -156,7 +156,7 @@ namespace Calendar.Controllers
                 ev.Description = dto.Description;
                 ev.Location = dto.Location;
                 ev.DateEvent = dto.DateEvent;
-                ev.DateEndEvent = dto.DateEntEvent;
+                ev.DateEndEvent = dto.DateEndEvent;
                 ev.BgColor = dto.BgColor;
                 ev.TypeEvent = dto.TypeEvent;
                 ev.UpdatedAt = DateTime.UtcNow;
@@ -190,7 +190,7 @@ namespace Calendar.Controllers
                 await _context.SaveChangesAsync();
                 await transaction.CommitAsync();
 
-                return Ok(ev);
+                return Ok(new { message = "Evento actualizado correctamente." });
             }
             catch
             {
@@ -231,7 +231,7 @@ namespace Calendar.Controllers
                 await _context.SaveChangesAsync();
                 await transaction.CommitAsync();
 
-                return Ok(ev);
+                return Ok(new { message = "Evento eliminado correctamente." });
             }
             catch
             {

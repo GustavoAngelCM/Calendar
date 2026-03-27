@@ -27,7 +27,7 @@ namespace Calendar.DTOs
         public string BgColor { get; set; } = string.Empty;
         public TypeEvent TypeEvent { get; set; }
         public DateTime DateEvent { get; set; }
-        public DateTime DateEntEvent { get; set; }
+        public DateTime DateEndEvent { get; set; }
 
         public List<int> ParticipantsIds { get; set; } = new();
     }
