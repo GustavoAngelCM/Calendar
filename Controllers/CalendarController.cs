@@ -41,6 +41,9 @@ namespace Calendar.Controllers
                     e.Name,
                     e.Description,
                     e.DateEvent,
+                    e.DateEndEvent,
+                    e.Location,
+                    e.TypeEvent,
 
                     Detail = e.Participations
                         .Where(p =>
