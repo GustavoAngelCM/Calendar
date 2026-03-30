@@ -63,7 +63,8 @@ namespace Calendar.Controllers
                     DateEndEvent = dto.DateEndEvent,
                     Location = dto.Location,
                     BgColor = dto.BgColor,
-                    TypeEvent = dto.TypeEvent
+                    TypeEvent = dto.TypeEvent,
+                    Category = dto.Category,
                 };
 
                 _context.Events.Add(newEvent);
@@ -161,6 +162,7 @@ namespace Calendar.Controllers
                 ev.BgColor = dto.BgColor;
                 ev.TypeEvent = dto.TypeEvent;
                 ev.UpdatedAt = DateTime.UtcNow;
+                ev.Category = dto.Category;
 
                 var currentParticipants = ev.Participations
                     .Where(p => !p.IsCreator)

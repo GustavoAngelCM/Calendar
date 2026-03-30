@@ -124,6 +124,7 @@ namespace Calendar.Controllers
                     e.DateEndEvent,
                     e.Location,
                     e.TypeEvent,
+                    e.Category,
 
                     Detail = new
                     {

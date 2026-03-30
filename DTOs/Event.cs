@@ -9,6 +9,7 @@ namespace Calendar.DTOs
         public string Description { get; set; } = string.Empty;
         public string Location { get; set; } = string.Empty;
         public string BgColor { get; set; } = string.Empty;
+        public string? Category { get; set; } = string.Empty;
         public TypeEvent TypeEvent { get; set; } = TypeEvent.Shared;
         public DateTime DateEvent { get; set; }
         public DateTime DateEndEvent { get; set; }
@@ -25,6 +26,7 @@ namespace Calendar.DTOs
         public string Description { get; set; } = string.Empty;
         public string Location { get; set; } = string.Empty;
         public string BgColor { get; set; } = string.Empty;
+        public string? Category { get; set; } = string.Empty;
         public TypeEvent TypeEvent { get; set; }
         public DateTime DateEvent { get; set; }
         public DateTime DateEndEvent { get; set; }
