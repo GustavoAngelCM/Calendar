@@ -36,4 +36,12 @@ namespace Calendar.DTOs
     {
         public int Id { get; set; }
     }
+
+    public enum ParticipationStatusDto
+    {
+        Pending,
+        Accepted,
+        Rejected,
+        Other
+    }
 }

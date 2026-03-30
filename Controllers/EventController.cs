@@ -90,6 +90,7 @@ namespace Calendar.Controllers
                     EventId = newEvent.Id,
                     UserId = id,
                     IsCreator = false,
+                    InvitedByUserId = userIdLogged,
                     Status = ParticipationStatus.Pending
                 }));
 
@@ -184,7 +185,8 @@ namespace Calendar.Controllers
                 {
                     EventId = ev.Id,
                     UserId = id,
-                    Status = ParticipationStatus.Pending
+                    Status = ParticipationStatus.Pending,
+                    InvitedByUserId = userIdLogged,
                 }));
 
                 await _context.SaveChangesAsync();

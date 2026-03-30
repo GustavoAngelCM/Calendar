@@ -21,21 +21,88 @@ namespace Calendar.Controllers
         }
 
         [Authorize]
-        [HttpGet("calendar/{typeStatusCalendar}")]
-        public async Task<IActionResult> GetCalendar(ParticipationStatus typeStatusCalendar)
+        [HttpPost]
+        public async Task<IActionResult> UpdateResponseEvent(ParticipationResponseEventDto dto)
         {
-            var userLoggedId = User.GetUserId();
+            try
+            {
+                var userLoggedId = User.GetUserId();
 
-            var events = await _context.Events
-                .Where(e => e.Active && e.DeletedAt == null)
-                .Where(e => e.Participations.Any(p =>
-                    p.UserId == userLoggedId &&
-                    p.Status == typeStatusCalendar &&
-                    p.Active &&
-                    p.DeletedAt == null
-                ))
-                .OrderBy(e => e.DateEvent)
-                .Select(e => new
+                var participation = await _context.Participations
+                    .FirstOrDefaultAsync(p =>
+                        p.UserId == userLoggedId &&
+                        p.EventId == dto.Id &&
+                        p.Active &&
+                        p.DeletedAt == null
+                    );
+
+                if (participation == null)
+                {
+                    return BadRequest("La invitacion a este evento no existe.");
+                }
+
+                participation.Status = dto.ParticipationStatus;
+
+                await _context.SaveChangesAsync();
+
+                return Ok(new { message = "Respuesta al evento guardado." });
+            }
+            catch (Exception)
+            {
+
+                throw;
+            }
+        }
+
+        [Authorize]
+        [HttpGet("calendar/{typeStatusCalendar}")]
+        public async Task<IActionResult> GetCalendar(ParticipationStatusDto typeStatusCalendar)
+        {
+            var eventsDb = await _context.Events
+                    .AsNoTracking()
+                    .Where(e => e.Active && e.DeletedAt == null && e.TypeEvent == TypeEvent.Shared)
+                    .OrderBy(e => e.DateEvent)
+                    .ToListAsync();
+
+            var userLoggedId = User.GetUserId();
+            var status = (typeStatusCalendar == ParticipationStatusDto.Pending ? ParticipationStatus.Pending :
+            (
+                typeStatusCalendar == ParticipationStatusDto.Accepted ? ParticipationStatus.Accepted :
+                (
+                    typeStatusCalendar == ParticipationStatusDto.Rejected ? ParticipationStatus.Rejected : ParticipationStatus.Pending
+                )
+            ));
+
+            if (typeStatusCalendar != ParticipationStatusDto.Other)
+            {
+                eventsDb = await _context.Events
+                    .AsNoTracking()
+                    .Include(e => e.Participations)
+                        .ThenInclude(p => p.User)
+                    .Where(e => e.Active && e.DeletedAt == null)
+                    .Where(e => e.Participations.Any(p =>
+                        p.UserId == userLoggedId &&
+                        p.Status == status &&
+                        p.Active &&
+                        p.DeletedAt == null
+                    ))
+                    .OrderBy(e => e.DateEvent)
+                    .ToListAsync();
+            }
+
+            var events = eventsDb.Select(e =>
+            {
+                var participation = e.Participations
+                    .FirstOrDefault(p =>
+                        typeStatusCalendar == ParticipationStatusDto.Other ? (p.Active &&
+                        p.DeletedAt == null) : (p.UserId == userLoggedId &&
+                        p.Active &&
+                        p.DeletedAt == null)
+                    );
+
+                if (participation == null) return null;
+
+                return new
                 {
                     e.Id,
                     e.Name,
@@ -45,45 +112,45 @@ namespace Calendar.Controllers
                     e.Location,
                     e.TypeEvent,
 
-                    GuestUsers = e.Participations
-                                .Where(pe => pe.IsCreator == true)
-                                .Select(pe => new {
-                                    pe.User.Id,
-                                    pe.User.Name
-                                })
-                                .ToList(),
+                    Detail = new
+                    {
+                        participation.IsCreator,
+                        participation.Status,
+                        participation.RespondedAt,
 
-                    Detail = e.Participations
-                        .Where(p =>
-                            p.UserId == userLoggedId &&
-                            p.Active &&
-                            p.DeletedAt == null
-                        )
-                        .Select(p => new
+                        GuestUsers = participation.IsCreator
+                            ? e.Participations
+                                .Where(p => p.Active && p.DeletedAt == null && p.UserId != userLoggedId)
+                                .Select(p => new
+                                {
+                                    p.User.Id,
+                                    p.User.Name
+                                })
+                                .ToList()
+                            : null,
+
+                        User = new
                         {
-                            p.IsCreator,
-                            p.Status,
-                            p.RespondedAt,
-                            User = new
-                            {
-                                p.User.Id,
-                                p.User.Name,
-                                p.User.Email
-                            },
-                            InvitedBy = p.InvitedByUserId != null
-                                ? _context.Users
-                                    .Where(u => u.Id == p.InvitedByUserId)
-                                    .Select(u => new
-                                    {
-                                        u.Id,
-                                        u.Name
-                                    })
-                                    .FirstOrDefault()
-                                : null
-                        })
-                        .FirstOrDefault()
-                })
-                .ToListAsync();
+                            participation.User.Id,
+                            participation.User.Name,
+                            participation.User.Email
+                        },
+
+                        InvitedBy = participation.InvitedByUserId != null
+                            ? e.Participations
+                                .Where(p => p.UserId == participation.InvitedByUserId)
+                                .Select(p => new
+                                {
+                                    p.User.Id,
+                                    p.User.Name
+                                })
+                                .FirstOrDefault()
+                            : null
+                    }
+                };
+            })
+            .Where(e => e != null)
+            .ToList();
 
             return Ok(events);
         }
