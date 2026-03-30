@@ -58,12 +58,6 @@ namespace Calendar.Controllers
         [HttpGet("calendar/{typeStatusCalendar}")]
         public async Task<IActionResult> GetCalendar(ParticipationStatusDto typeStatusCalendar)
         {
-            var eventsDb = await _context.Events
-                    .AsNoTracking()
-                    .Where(e => e.Active && e.DeletedAt == null && e.TypeEvent == TypeEvent.Shared)
-                    .OrderBy(e => e.DateEvent)
-                    .ToListAsync();
-
             var userLoggedId = User.GetUserId();
             var status = (typeStatusCalendar == ParticipationStatusDto.Pending ? ParticipationStatus.Pending :
             (
@@ -73,31 +67,50 @@ namespace Calendar.Controllers
                 )
             ));
 
-            if (typeStatusCalendar != ParticipationStatusDto.Other)
-            {
-                eventsDb = await _context.Events
+            var eventsDb = await _context.Events
                     .AsNoTracking()
                     .Include(e => e.Participations)
                         .ThenInclude(p => p.User)
                     .Where(e => e.Active && e.DeletedAt == null)
                     .Where(e => e.Participations.Any(p =>
-                        p.UserId == userLoggedId &&
+                        (
+                            typeStatusCalendar == ParticipationStatusDto.Other
+                                ? p.UserId != userLoggedId && e.TypeEvent != TypeEvent.Exclusive
+                                : p.UserId == userLoggedId
+                        ) &&
                         p.Status == status &&
                         p.Active &&
                         p.DeletedAt == null
                     ))
                     .OrderBy(e => e.DateEvent)
                     .ToListAsync();
-            }
 
             var events = eventsDb.Select(e =>
             {
                 var participation = e.Participations
+                    .Where(pa =>
+                        typeStatusCalendar == ParticipationStatusDto.Pending
+                            ? (pa.UserId == userLoggedId && !pa.IsCreator)
+                            : (
+                                typeStatusCalendar == ParticipationStatusDto.Accepted 
+                                ? (pa.UserId == userLoggedId)
+                                : (
+                                    typeStatusCalendar == ParticipationStatusDto.Rejected
+                                    ? (pa.UserId == userLoggedId && !pa.IsCreator) :
+                                    (pa.UserId != userLoggedId && !pa.IsCreator && pa.Status != ParticipationStatus.Rejected)
+                                )
+                            )
+                    )
                     .FirstOrDefault(p =>
-                        typeStatusCalendar == ParticipationStatusDto.Other ? (p.Active &&
-                        p.DeletedAt == null) : (p.UserId == userLoggedId &&
-                        p.Active &&
-                        p.DeletedAt == null)
+                        typeStatusCalendar == ParticipationStatusDto.Other
+                            ? (
+                                p.Active &&
+                                p.DeletedAt == null
+                            ) : (
+                                p.UserId == userLoggedId &&
+                                p.Active &&
+                                p.DeletedAt == null
+                            )
                     );
 
                 if (participation == null) return null;
@@ -136,7 +149,7 @@ namespace Calendar.Controllers
                             participation.User.Email
                         },
 
-                        InvitedBy = participation.InvitedByUserId != null
+                        InvitedBy = participation.InvitedByUserId != null && typeStatusCalendar != ParticipationStatusDto.Other
                             ? e.Participations
                                 .Where(p => p.UserId == participation.InvitedByUserId)
                                 .Select(p => new
